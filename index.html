@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Facebook Post Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-bold mb-6">AI Facebook Post Scheduler</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Calendar Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Calendar</h2>
+                <div id="calendar"></div>
+            </div>
+            
+            <!-- Scheduling Section -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Schedule Post</h2>
+                <form id="schedule-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2" for="post-datetime">Date and Time</label>
+                        <input type="datetime-local" id="post-datetime" class="w-full p-2 border rounded" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2" for="post-content">Post Content (AI Generated)</label>
+                        <textarea id="post-content" rows="4" class="w-full p-2 border rounded" readonly></textarea>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Schedule Post</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Scheduled Posts Section -->
+        <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Scheduled Posts</h2>
+            <ul id="scheduled-posts" class="space-y-4">
+                <!-- Scheduled posts will be populated here -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000'; // Update this to your actual backend URL
+
+        // Function to schedule a post
+        async function schedulePost(event) {
+            event.preventDefault();
+            const scheduledTime = document.getElementById('post-datetime').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/schedule-post`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ scheduledTime }),
+                });
+                const data = await response.json();
+                document.getElementById('post-content').value = data.content;
+                alert(data.message);
+                fetchScheduledPosts();
+            } catch (error) {
+                console.error('Error scheduling post:', error);
+                alert('Failed to schedule post');
+            }
+        }
+
+        // Function to fetch and display scheduled posts
+        async function fetchScheduledPosts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/scheduled-posts`);
+                const posts = await response.json();
+                const postsList = document.getElementById('scheduled-posts');
+                postsList.innerHTML = '';
+                posts.forEach(post => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center border-b pb-2';
+                    li.innerHTML = `
+                        <div>
+                            <p class="font-medium">Scheduled Post</p>
+                            <p class="text-sm text-gray-500">Scheduled for: ${new Date(post.scheduledTime).toLocaleString()}</p>
+                        </div>
+                        <button class="text-red-500 hover:text-red-700" onclick="deletePost('${post.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    postsList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching scheduled posts:', error);
+            }
+        }
+
+        // Function to delete a scheduled post
+        async function deletePost(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/scheduled-post/${id}`, {
+                    method: 'DELETE',
+                });
+                const data = await response.json();
+                alert(data.message);
+                fetchScheduledPosts();
+            } catch (error) {
+                console.error('Error deleting post:', error);
+                alert('Failed to delete post');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('schedule-form').addEventListener('submit', schedulePost);
+
+        // Initial load of scheduled posts
+        fetchScheduledPosts();
+    </script>
+</body>
+</html>

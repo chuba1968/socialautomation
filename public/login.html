@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Successful</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Hello, <span id="username"></span>!</h1>
+        <p>You have successfully logged in with Facebook.</p>
+    </div>
+    <script>
+        // Inject the username into the HTML
+        const username = new URLSearchParams(window.location.search).get('name');
+        document.getElementById('username').textContent = username;
+    </script>
+</body>
+</html>
